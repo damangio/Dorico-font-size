@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f2f2">
+  <title>Dorico lyric font size calculator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f2f2f2;
+      --ink: #0a0a0a;
+      --muted: #555;
+      --line: #d6d6d6;
+      --accent: #005678;
+      --accent-soft: #d7e8eb;
+      --white: #fff;
+      --focus: #005678;
+      --space-1: 8px;
+      --space-2: 16px;
+      --space-3: 24px;
+      --space-4: 32px;
+      font-family: Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: var(--space-4) 20px;
+      color: var(--ink);
+      background-color: var(--paper);
+    }
+
+    main {
+      width: max-content;
+      max-width: calc(100vw - 40px);
+      min-width: 0;
+      padding: var(--space-3) clamp(18px, 6vw, 40px);
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgb(0 0 0 / 6%);
+      animation: arrive 420ms ease-out both;
+    }
+
+    .field-stack {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-2);
+    }
+
+    .field {
+      min-width: 0;
+    }
+
+    .input-suffix {
+      width: min(100%, 320px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-suffix[hidden] { display: none; }
+
+    .field-value { margin-bottom: var(--space-1); }
+
+    .input-suffix input,
+    .input-suffix output { flex: 1; min-width: 0; }
+
+    .input-suffix span {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .field-help {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .scaling-group {
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .scaling-group legend {
+      margin-bottom: var(--space-1);
+      padding: 0;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .scaling-fields {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .field-emphasis {
+      width: 100%;
+      padding: var(--space-2);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      background: var(--white);
+    }
+
+    header { margin-bottom: var(--space-3); }
+
+    .mode-options {
+      display: grid;
+      gap: var(--space-1);
+      margin: 0 0 var(--space-3);
+      padding: 0;
+      border: 0;
+    }
+
+    .mode-options label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .mode-options input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .subtitle {
+      margin: var(--space-1) 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    label, .result-label {
+      display: block;
+      margin-bottom: var(--space-1);
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    input:not([type="radio"]) {
+      width: 100%;
+      min-width: 0;
+      height: 52px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      outline: none;
+      color: var(--ink);
+      background: var(--white);
+      font: inherit;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    input:not([type="radio"]):focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 3px rgb(0 86 120 / 16%);
+    }
+
+    .result {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      overflow-wrap: anywhere;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-size: 20px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 650;
+    }
+
+    .result-input {
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-size: 20px;
+      font-weight: 650;
+    }
+
+    .calculation + .calculation {
+      margin-top: var(--space-3);
+    }
+
+    .error {
+      min-height: 18px;
+      margin: var(--space-1) 0 0;
+      color: #9c3d26;
+      font-size: 12px;
+    }
+
+    footer {
+      margin-top: var(--space-3);
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    footer p { margin: 0 0 var(--space-1); }
+
+    footer a {
+      color: var(--accent);
+      overflow-wrap: anywhere;
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 360px) {
+      h1 { font-size: 16px; }
+      input:not([type="radio"]) { padding: 0 10px; }
+      .result { padding: 0 10px; }
+    }
+
+    @media (min-width: 361px) and (max-width: 640px) {
+      h1 { font-size: 20px; }
+    }
+
+    @media (min-width: 641px) {
+      .field > label,
+      .result-label { white-space: nowrap; }
+    }
+
+    @media (min-width: 741px) {
+      main { width: 700px; }
+      .breadcrumb { white-space: nowrap; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Dorico lyric font size calculator</h1>
+      <p class="subtitle">How to set up Dorico to produce lyrics at a given font size</p>
+    </header>
+
+    <fieldset class="mode-options" aria-label="Actual font size">
+      <label>
+        <input type="radio" name="actual-mode" value="manual">
+        Specify actual font size
+      </label>
+      <label>
+        <input type="radio" name="actual-mode" value="finale" checked>
+        Get actual font size from Finale
+      </label>
+    </fieldset>
+
+    <section id="finale-fields" class="calculation" aria-label="Finale font settings">
+      <div class="field-stack">
+        <div class="field">
+          <label for="value-a">Finale's lyric font size</label>
+          <p class="field-help" id="help-a"><span class="breadcrumb">Document → Document options → Fonts → Lyrics</span></p>
+          <div class="input-suffix">
+            <input id="value-a" type="number" step="any" inputmode="decimal" aria-describedby="help-a">
+            <span aria-hidden="true">pt</span>
+          </div>
+        </div>
+        <fieldset class="scaling-group">
+          <legend>Finale's scaling</legend>
+          <p class="field-help" id="help-b-group"><span class="breadcrumb">Document → Page Format → (Score or Parts)</span></p>
+          <div class="scaling-fields">
+            <div class="field">
+              <label class="field-help" for="value-b1">Scale Page To</label>
+              <div class="input-suffix">
+                <input id="value-b1" type="number" step="any" inputmode="decimal" aria-describedby="help-b-group">
+                <span aria-hidden="true">%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-help" for="value-b2">Resulting System Scaling</label>
+              <div class="input-suffix">
+                <input id="value-b2" type="number" step="any" inputmode="decimal" aria-describedby="help-b-group">
+                <span aria-hidden="true">%</span>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section id="actual-font-size" class="calculation" aria-label="Actual font size">
+      <div class="field-emphasis">
+        <label class="result-label" id="label-c" for="value-c">Actual font size</label>
+        <div id="computed-c" class="input-suffix field-value">
+          <output class="result" id="result-c" for="value-a value-b1 value-b2" aria-labelledby="label-c" aria-describedby="help-c" aria-live="polite"></output>
+          <span aria-hidden="true">pt</span>
+        </div>
+        <div id="manual-c" class="input-suffix field-value" hidden>
+          <input id="value-c" class="result-input" type="number" step="any" inputmode="decimal" aria-describedby="help-c">
+          <span aria-hidden="true">pt</span>
+        </div>
+        <p class="field-help" id="help-c">If there is only one layout, or all layouts use the same staff size, set this in:<br><br><span class="breadcrumb">Library → Paragraph Styles → Lyrics → Size</span><br>and select <strong>Absolute</strong><br><br>If there are layouts with different staff sizes, or you want to change the staff size but keep the lyrics in proportion, see below.</p>
+      </div>
+    </section>
+
+    <section class="calculation" aria-label="Calculate result E">
+      <div class="field-stack">
+        <div class="field">
+          <label for="value-d">Dorico's staff size</label>
+          <p class="field-help" id="help-d"><span class="breadcrumb">Library → Layout Options → (Choose your layout) → Page Setup → Space Size → Staff size in pt</span></p>
+          <div class="input-suffix">
+            <input id="value-d" type="number" step="any" inputmode="decimal" aria-describedby="help-d">
+            <span aria-hidden="true">pt</span>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-emphasis">
+            <span class="result-label">Dorico's relative font size</span>
+            <div class="input-suffix field-value">
+              <output class="result" id="result-e" for="value-a value-b1 value-b2 value-d" aria-describedby="help-e" aria-live="polite"></output>
+              <span aria-hidden="true">pt</span>
+            </div>
+            <p class="field-help" id="help-e">Set this in:<br><span class="breadcrumb">Library → Paragraph Styles → Lyrics → Size</span><br>and select <strong>Staff-relative</strong></p>
+          </div>
+        </div>
+      </div>
+      <p class="error" id="result-error" role="status" aria-live="polite"></p>
+    </section>
+
+    <footer>
+      <p>By Sam Kauffman</p>
+      <a href="https://github.com/damangio/Dorico-font-size">https://github.com/damangio/Dorico-font-size</a>
+    </footer>
+  </main>
+
+  <script>
+    const inputA = document.querySelector("#value-a");
+    const inputB1 = document.querySelector("#value-b1");
+    const inputB2 = document.querySelector("#value-b2");
+    const inputC = document.querySelector("#value-c");
+    const inputD = document.querySelector("#value-d");
+    const finaleFields = document.querySelector("#finale-fields");
+    const computedC = document.querySelector("#computed-c");
+    const manualC = document.querySelector("#manual-c");
+    const resultC = document.querySelector("#result-c");
+    const resultE = document.querySelector("#result-e");
+    const error = document.querySelector("#result-error");
+    const formatter = new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    });
+
+    function readNumber(input) {
+      if (input.value.trim() === "") return null;
+      const value = Number(input.value);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    function display(value) {
+      return Number.isFinite(value) ? formatter.format(value) : "";
+    }
+
+    function update() {
+      const a = readNumber(inputA);
+      const b1 = readNumber(inputB1);
+      const b2 = readNumber(inputB2);
+      const manualMode = document.querySelector('input[name="actual-mode"]:checked').value === "manual";
+      const d = readNumber(inputD);
+      const c = manualMode ? readNumber(inputC) : a === null || b1 === null || b2 === null ? null : a * (b1 / 100) * (b2 / 100);
+
+      resultC.textContent = manualMode || c === null ? "" : display(c);
+      resultE.textContent = c === null || d === null || d === 0 ? "" : display(c / (d / 20));
+      error.textContent = d === 0 && c !== null ? "Field D must not be zero." : "";
+    }
+
+    function updateMode() {
+      const manualMode = document.querySelector('input[name="actual-mode"]:checked').value === "manual";
+      finaleFields.hidden = manualMode;
+      computedC.hidden = manualMode;
+      manualC.hidden = !manualMode;
+      update();
+    }
+
+    [inputA, inputB1, inputB2, inputC, inputD].forEach((input) => input.addEventListener("input", update));
+    document.querySelectorAll('input[name="actual-mode"]').forEach((input) => input.addEventListener("change", updateMode));
+  </script>
+</body>
+</html>
