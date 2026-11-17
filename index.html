@@ -415,6 +415,8 @@
 
     [inputA, inputB1, inputB2, inputC, inputD].forEach((input) => input.addEventListener("input", update));
     document.querySelectorAll('input[name="actual-mode"]').forEach((input) => input.addEventListener("change", updateMode));
+    window.addEventListener("pageshow", updateMode);
+    updateMode();
   </script>
 </body>
 </html>
